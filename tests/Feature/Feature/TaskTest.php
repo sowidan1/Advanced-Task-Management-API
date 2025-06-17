@@ -53,8 +53,6 @@ class TaskTest extends TestCase
             ->assertJsonPath('data.title', 'Updated Title');
     }
 
-
-
     public function test_user_can_view_task()
     {
         $task = Task::factory()->for($this->user)->create();
