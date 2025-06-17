@@ -10,7 +10,7 @@ class UpdateTaskStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'in:' . implode(',', Task::getStatuses())],
+            'status' => ['required', 'in:'.implode(',', Task::getStatuses())],
         ];
     }
 }

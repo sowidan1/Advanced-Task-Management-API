@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamp('notification_sent_at')->nullable();
 
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            
+
             $table->softDeletes();
 
             $table->timestamps();

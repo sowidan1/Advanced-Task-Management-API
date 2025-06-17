@@ -34,6 +34,7 @@ class TaskController extends Controller
     {
         try {
             $task = $this->taskService->createTask($request->validated());
+
             return new TaskResource($task);
         } catch (ValidationException $e) {
             throw $e;
@@ -43,6 +44,7 @@ class TaskController extends Controller
     public function show(Task $task): TaskResource
     {
         $this->authorizeTask($task);
+
         return new TaskResource($task);
     }
 
@@ -51,6 +53,7 @@ class TaskController extends Controller
         try {
             $this->authorizeTask($task);
             $updatedTask = $this->taskService->updateTask($task, $request->validated());
+
             return new TaskResource($updatedTask);
         } catch (ValidationException $e) {
             throw $e;
@@ -61,12 +64,14 @@ class TaskController extends Controller
     {
         $this->authorizeTask($task);
         $this->taskService->deleteTask($task);
+
         return response()->json(null, 204);
     }
 
     public function search(SearchTaskRequest $request): AnonymousResourceCollection
     {
         $tasks = $this->taskService->searchTasks($request->validated()['query']);
+
         return TaskResource::collection($tasks);
     }
 
@@ -74,6 +79,7 @@ class TaskController extends Controller
     {
         try {
             $updatedTask = $this->taskService->updateTaskStatus($task, $request->validated()['status']);
+
             return new TaskResource($updatedTask);
         } catch (ValidationException $e) {
             throw $e;

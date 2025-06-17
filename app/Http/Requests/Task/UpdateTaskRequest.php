@@ -18,5 +18,4 @@ class UpdateTaskRequest extends FormRequest
             'status' => ['required', Rule::in(Task::getStatuses())],
         ];
     }
-
 }
