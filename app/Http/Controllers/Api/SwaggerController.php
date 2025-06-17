@@ -16,6 +16,7 @@ use OpenApi\Annotations as OA;
  * @OA\Schema(
  *     schema="Task",
  *     required={"title", "due_date", "priority", "status"},
+ *
  *     @OA\Property(property="title", type="string", example="Buy groceries"),
  *     @OA\Property(property="due_date", type="string", format="date", example="2025-06-30"),
  *     @OA\Property(property="priority", type="string", example="high"),

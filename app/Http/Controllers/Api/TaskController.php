@@ -24,7 +24,6 @@ use OpenApi\Annotations as OA;
  *     description="Task management API"
  * )
  */
-
 class TaskController extends Controller
 {
     private TaskService $taskService;
