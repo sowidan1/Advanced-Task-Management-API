@@ -97,6 +97,11 @@ SCOUT_DRIVER=database
 QUEUE_CONNECTION=database
 ```
 
+#### Cache Configuration
+```env
+CACHE_DRIVER=database
+```
+
 #### Mail Configuration
 ```env
 MAIL_MAILER=smtp
