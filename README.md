@@ -1,61 +1,225 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Task Management API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A robust, feature-rich Laravel-based RESTful API for comprehensive task management with advanced workflows, notifications, and full documentation.
 
-## About Laravel
+## Table of Contents
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [API Documentation](#api-documentation)
+- [Authentication](#authentication)
+- [API Endpoints](#api-endpoints)
+- [Testing](#testing)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Core Functionality
+- **Complete CRUD Operations** - Create, read, update, and delete tasks
+- **Status Management** - Workflow-based status transitions (Pending → In Progress → Completed)
+- **Priority System** - Three-tier priority levels (Low, Medium, High)
+- **Soft Deletion** - Recoverable task deletion with data preservation
+- **Advanced Filtering** - Filter by status, priority, date ranges, and creation date
+- **Comprehensive Validation** - Input validation with meaningful error responses
 
-## Learning Laravel
+### Advanced Features
+- **Full-Text Search** - Powered by Laravel Scout for title and description search
+- **Automated Notifications** - Email alerts 24 hours before task due dates
+- **Background Processing** - Queue-based email delivery and task monitoring
+- **Rate Limiting** - API throttling (60 requests/minute) for optimal performance
+- **Swagger Documentation** - Auto-generated OpenAPI documentation
+- **Token Authentication** - Secure API access using Laravel Sanctum
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Requirements
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **PHP** 8.1 or higher
+- **Composer** 2.0+
+- **MySQL** 8.0+
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation
 
-## Laravel Sponsors
+### 1. Clone the Repository
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+git clone https://github.com/sowidan1/Advanced-Task-Management-API
+cd Advanced-Task-Management-API
+```
 
-### Premium Partners
+### 2. Install Dependencies
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+composer install
+```
 
-## Contributing
+### 3. Environment Setup
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-## Code of Conduct
+### 4. Database Migration
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan migrate
+```
 
-## Security Vulnerabilities
+### 5. Generate API Documentation
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan l5-swagger:generate
+```
 
-## License
+## Configuration
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Environment Variables
+
+Configure your `.env` file with the following settings:
+
+#### Database Configuration
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=task_management
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+#### Search Configuration
+```env
+SCOUT_DRIVER=database
+```
+
+#### Queue Configuration
+```env
+QUEUE_CONNECTION=database
+```
+
+#### Mail Configuration
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=your_smtp_host
+MAIL_PORT=587
+MAIL_USERNAME=your_email@domain.com
+MAIL_PASSWORD=your_app_password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=your_email@domain.com
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+### Background Tasks
+
+Start the queue worker for processing notifications:
+
+```bash
+php artisan queue:work
+```
+
+## API Documentation
+
+### Swagger UI
+Access the interactive API documentation at:
+```
+http://your-domain/api/documentation
+```
+
+## Authentication
+
+This API uses **Laravel Sanctum** for token-based authentication.
+
+### Registration
+```http
+POST /api/register
+Content-Type: application/json
+
+{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "password123",
+    "password_confirmation": "password123"
+}
+```
+
+### Login
+```http
+POST /api/login
+Content-Type: application/json
+
+{
+    "email": "john@example.com",
+    "password": "password123"
+}
+```
+
+### Using the Token
+Include the token in all subsequent requests:
+```http
+Authorization: Bearer your-api-token-here
+```
+
+## API Endpoints
+
+### Authentication Routes
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/register` | User registration |
+| POST | `/api/login` | User login |
+| POST | `/api/logout` | User logout |
+
+### Task Management Routes
+All task routes require authentication and are rate-limited to 60 requests per minute.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/tasks` | List all tasks with filtering options |
+| POST | `/api/tasks` | Create a new task |
+| GET | `/api/tasks/{id}` | Get specific task details |
+| PUT | `/api/tasks/{id}` | Update a task |
+| DELETE | `/api/tasks/{id}` | Delete a task (soft delete) |
+| PATCH | `/api/tasks/{id}/status` | Update task status |
+| GET | `/api/tasks/search` | Search tasks by title/description |
+
+### Query Parameters
+
+#### Filtering Tasks
+```http
+GET /api/tasks?status=pending&priority=high&due_date_from=2024-01-01&due_date_to=2024-12-31
+```
+
+#### Searching Tasks
+```http
+GET /api/tasks/search?q=project+meeting
+```
+
+
+## Testing
+
+### Running Tests
+
+Execute the complete test suite:
+```bash
+php artisan test
+````
+
+## Technology Stack
+
+- **Framework**: Laravel 12
+- **Authentication**: Laravel Sanctum
+- **Database**: MySQL
+- **Search**: Laravel Scout
+- **Queue System**: Laravel Queue
+- **Documentation**: L5-Swagger (OpenAPI 3.0)
+- **Testing**: PHPUnit
+- **Email**: Laravel Mail with SMTP
+
+## Performance Considerations
+
+- **Database Indexing**: Optimized indexes on frequently queried columns
+- **Query Optimization**: Eager loading to prevent N+1 queries
+- **Caching**: Redis-based caching for improved response times
+- **Queue Processing**: Background job processing for email notifications
+- **Rate Limiting**: API throttling to prevent abuse
+
+**Developed with ❤️ by [Osama Sowidan]** - Software Engineer.
