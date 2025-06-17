@@ -22,7 +22,7 @@ class TaskService
 
         $task = Task::create($data);
 
-        Cache::tags(['tasks:'.Auth::id()])->flush();
+        Cache::forget('tasks:'.Auth::id());
 
         return $task;
     }
@@ -37,7 +37,7 @@ class TaskService
 
         $task->update(['status' => $status]);
 
-        Cache::tags(['tasks:'.$task->user_id])->flush();
+        Cache::forget('tasks:'.$task->user_id);
 
         return $task->refresh();
     }
@@ -49,7 +49,7 @@ class TaskService
         }
         $task->update($data);
 
-        Cache::tags(['tasks:'.$task->user_id])->flush();
+        Cache::forget('tasks:'.$task->user_id);
 
         return $task->refresh();
     }
@@ -121,7 +121,7 @@ class TaskService
     {
         $result = $task->delete();
 
-        Cache::tags(['tasks:'.$task->user_id])->flush();
+        Cache::forget('tasks:'.$task->user_id);
 
         return $result;
     }
