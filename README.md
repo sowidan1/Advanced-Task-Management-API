@@ -42,7 +42,7 @@ A robust, feature-rich Laravel-based RESTful API for comprehensive task manageme
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/sowidan1/Advanced-Task-Management-API
+git clone https://github.com/sowidan1/Advanced-Task-Management-API.git
 cd Advanced-Task-Management-API
 ```
 
@@ -217,8 +217,7 @@ php artisan test
 ## Performance Considerations
 
 - **Database Indexing**: Optimized indexes on frequently queried columns
-- **Query Optimization**: Eager loading to prevent N+1 queries
-- **Caching**: Redis-based caching for improved response times
+- **Caching**: caching for improved response times
 - **Queue Processing**: Background job processing for email notifications
 - **Rate Limiting**: API throttling to prevent abuse
 
