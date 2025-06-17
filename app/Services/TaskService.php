@@ -1,0 +1,104 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Task;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Validation\ValidationException;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class TaskService
+{
+    public function createTask(array $data): Task
+    {
+        $data['user_id'] = Auth::id();
+
+        return (Task::create($data));
+    }
+
+    public function updateTaskStatus(Task $task, string $status): Task
+    {
+        if ($status === Task::STATUS_COMPLETED && !$task->canBeCompleted()) {
+            throw ValidationException::withMessages([
+                'status' => ['Task must be in progress before it can be completed.']
+            ]);
+        }
+
+        $task->update(['status' => $status]);
+        return $task->refresh();
+    }
+
+    public function updateTask(Task $task, array $data): Task
+    {
+
+        if (isset($data['status']) && $data['status'] !== $task->status) {
+            return $this->updateTaskStatus($task, $data['status']);
+        }
+        $task->update($data);
+        return $task->refresh();
+    }
+
+    public function getTasks(Request $request): CursorPaginator
+    {
+        $query = QueryBuilder::for(Task::class)
+            ->where('user_id', Auth::id())
+            ->allowedFilters([
+                'status',
+                'priority',
+                AllowedFilter::callback('due_date_from', function ($query, $value) {
+                    $query->where('due_date', '>=', $value);
+                }),
+                AllowedFilter::callback('due_date_to', function ($query, $value) {
+                    $query->where('due_date', '<=', $value);
+                }),
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $query->where(function ($q) use ($value) {
+                        $q->where('title', 'like', "%{$value}%")
+                            ->orWhere('description', 'like', "%{$value}%");
+                    });
+                }),
+            ])
+            ->allowedSorts([
+                'due_date',
+                'created_at',
+                AllowedSort::callback('priority', function ($query, $descending) {
+                    $direction = $descending ? 'desc' : 'asc';
+                    $priorities = Task::getPriorityOrder();
+                    $case = collect($priorities)
+                        ->map(fn($order, $priority) => "WHEN '{$priority}' THEN {$order}")
+                        ->implode(' ');
+                    $query->orderByRaw("CASE priority {$case} END {$direction}");
+                }),
+            ])
+            ->defaultSort('-created_at');
+
+        return $query->cursorPaginate($request->input('per_page', 15));
+    }
+
+    public function searchTasks(string $query): Collection
+    {
+        return Task::search($query)->get();
+    }
+
+    public function updateOverdueTasks(): int
+    {
+        $overdueTasks = Task::overdue()->get();
+
+        foreach ($overdueTasks as $task) {
+            $task->updateOverdueStatus();
+        }
+
+        return $overdueTasks->count();
+    }
+
+    public function deleteTask(Task $task): bool
+    {
+        return $task->delete();
+    }
+}
