@@ -3,15 +3,15 @@
 namespace App\Services;
 
 use App\Models\Task;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
-use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class TaskService
 {
@@ -19,18 +19,19 @@ class TaskService
     {
         $data['user_id'] = Auth::id();
 
-        return (Task::create($data));
+        return Task::create($data);
     }
 
     public function updateTaskStatus(Task $task, string $status): Task
     {
-        if ($status === Task::STATUS_COMPLETED && !$task->canBeCompleted()) {
+        if ($status === Task::STATUS_COMPLETED && ! $task->canBeCompleted()) {
             throw ValidationException::withMessages([
-                'status' => ['Task must be in progress before it can be completed.']
+                'status' => ['Task must be in progress before it can be completed.'],
             ]);
         }
 
         $task->update(['status' => $status]);
+
         return $task->refresh();
     }
 
@@ -41,6 +42,7 @@ class TaskService
             return $this->updateTaskStatus($task, $data['status']);
         }
         $task->update($data);
+
         return $task->refresh();
     }
 
@@ -71,7 +73,7 @@ class TaskService
                     $direction = $descending ? 'desc' : 'asc';
                     $priorities = Task::getPriorityOrder();
                     $case = collect($priorities)
-                        ->map(fn($order, $priority) => "WHEN '{$priority}' THEN {$order}")
+                        ->map(fn ($order, $priority) => "WHEN '{$priority}' THEN {$order}")
                         ->implode(' ');
                     $query->orderByRaw("CASE priority {$case} END {$direction}");
                 }),
@@ -100,5 +102,15 @@ class TaskService
     public function deleteTask(Task $task): bool
     {
         return $task->delete();
+    }
+
+    public function getTasksNeedingNotification(): Collection
+    {
+        return Task::needsNotification()->get();
+    }
+
+    public function markNotificationSent(Task $task): void
+    {
+        $task->update(['notification_sent_at' => Carbon::now()]);
     }
 }
