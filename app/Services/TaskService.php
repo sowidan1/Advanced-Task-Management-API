@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
@@ -19,7 +20,11 @@ class TaskService
     {
         $data['user_id'] = Auth::id();
 
-        return Task::create($data);
+        $task = Task::create($data);
+
+        Cache::tags(['tasks:' . Auth::id()])->flush();
+
+        return $task;
     }
 
     public function updateTaskStatus(Task $task, string $status): Task
@@ -32,60 +37,73 @@ class TaskService
 
         $task->update(['status' => $status]);
 
+        Cache::tags(['tasks:' . $task->user_id])->flush();
+
         return $task->refresh();
     }
 
     public function updateTask(Task $task, array $data): Task
     {
-
         if (isset($data['status']) && $data['status'] !== $task->status) {
             return $this->updateTaskStatus($task, $data['status']);
         }
         $task->update($data);
+
+        Cache::tags(['tasks:' . $task->user_id])->flush();
 
         return $task->refresh();
     }
 
     public function getTasks(Request $request): CursorPaginator
     {
-        $query = QueryBuilder::for(Task::class)
-            ->where('user_id', Auth::id())
-            ->allowedFilters([
-                'status',
-                'priority',
-                AllowedFilter::callback('due_date_from', function ($query, $value) {
-                    $query->where('due_date', '>=', $value);
-                }),
-                AllowedFilter::callback('due_date_to', function ($query, $value) {
-                    $query->where('due_date', '<=', $value);
-                }),
-                AllowedFilter::callback('search', function ($query, $value) {
-                    $query->where(function ($q) use ($value) {
-                        $q->where('title', 'like', "%{$value}%")
-                            ->orWhere('description', 'like', "%{$value}%");
-                    });
-                }),
-            ])
-            ->allowedSorts([
-                'due_date',
-                'created_at',
-                AllowedSort::callback('priority', function ($query, $descending) {
-                    $direction = $descending ? 'desc' : 'asc';
-                    $priorities = Task::getPriorityOrder();
-                    $case = collect($priorities)
-                        ->map(fn ($order, $priority) => "WHEN '{$priority}' THEN {$order}")
-                        ->implode(' ');
-                    $query->orderByRaw("CASE priority {$case} END {$direction}");
-                }),
-            ])
-            ->defaultSort('-created_at');
+        $userId = Auth::id();
+        $cacheKey = 'tasks:' . $userId . ':' . md5(json_encode($request->all()));
 
-        return $query->cursorPaginate($request->input('per_page', 15));
+        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($request) {
+            $query = QueryBuilder::for(Task::class)
+                ->where('user_id', Auth::id())
+                ->allowedFilters([
+                    'status',
+                    'priority',
+                    AllowedFilter::callback('due_date_from', function ($query, $value) {
+                        $query->where('due_date', '>=', $value);
+                    }),
+                    AllowedFilter::callback('due_date_to', function ($query, $value) {
+                        $query->where('due_date', '<=', $value);
+                    }),
+                    AllowedFilter::callback('search', function ($query, $value) {
+                        $query->where(function ($q) use ($value) {
+                            $q->where('title', 'like', "%{$value}%")
+                                ->orWhere('description', 'like', "%{$value}%");
+                        });
+                    }),
+                ])
+                ->allowedSorts([
+                    'due_date',
+                    'created_at',
+                    AllowedSort::callback('priority', function ($query, $descending) {
+                        $direction = $descending ? 'desc' : 'asc';
+                        $priorities = Task::getPriorityOrder();
+                        $case = collect($priorities)
+                            ->map(fn($order, $priority) => "WHEN '{$priority}' THEN {$order}")
+                            ->implode(' ');
+                        $query->orderByRaw("CASE priority {$case} END {$direction}");
+                    }),
+                ])
+                ->defaultSort('-created_at');
+
+            return $query->cursorPaginate($request->input('per_page', 15));
+        });
     }
 
     public function searchTasks(string $query): Collection
     {
-        return Task::search($query)->get();
+        $userId = Auth::id();
+        $cacheKey = 'tasks:search:' . $userId . ':' . md5($query);
+
+        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($query) {
+            return Task::search($query)->get();
+        });
     }
 
     public function updateOverdueTasks(): int
@@ -101,7 +119,11 @@ class TaskService
 
     public function deleteTask(Task $task): bool
     {
-        return $task->delete();
+        $result = $task->delete();
+
+        Cache::tags(['tasks:' . $task->user_id])->flush();
+
+        return $result;
     }
 
     public function getTasksNeedingNotification(): Collection
