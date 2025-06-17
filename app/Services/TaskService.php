@@ -22,7 +22,7 @@ class TaskService
 
         $task = Task::create($data);
 
-        Cache::tags(['tasks:' . Auth::id()])->flush();
+        Cache::tags(['tasks:'.Auth::id()])->flush();
 
         return $task;
     }
@@ -37,7 +37,7 @@ class TaskService
 
         $task->update(['status' => $status]);
 
-        Cache::tags(['tasks:' . $task->user_id])->flush();
+        Cache::tags(['tasks:'.$task->user_id])->flush();
 
         return $task->refresh();
     }
@@ -49,7 +49,7 @@ class TaskService
         }
         $task->update($data);
 
-        Cache::tags(['tasks:' . $task->user_id])->flush();
+        Cache::tags(['tasks:'.$task->user_id])->flush();
 
         return $task->refresh();
     }
@@ -57,7 +57,7 @@ class TaskService
     public function getTasks(Request $request): CursorPaginator
     {
         $userId = Auth::id();
-        $cacheKey = 'tasks:' . $userId . ':' . md5(json_encode($request->all()));
+        $cacheKey = 'tasks:'.$userId.':'.md5(json_encode($request->all()));
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($request) {
             $query = QueryBuilder::for(Task::class)
@@ -85,7 +85,7 @@ class TaskService
                         $direction = $descending ? 'desc' : 'asc';
                         $priorities = Task::getPriorityOrder();
                         $case = collect($priorities)
-                            ->map(fn($order, $priority) => "WHEN '{$priority}' THEN {$order}")
+                            ->map(fn ($order, $priority) => "WHEN '{$priority}' THEN {$order}")
                             ->implode(' ');
                         $query->orderByRaw("CASE priority {$case} END {$direction}");
                     }),
@@ -99,7 +99,7 @@ class TaskService
     public function searchTasks(string $query): Collection
     {
         $userId = Auth::id();
-        $cacheKey = 'tasks:search:' . $userId . ':' . md5($query);
+        $cacheKey = 'tasks:search:'.$userId.':'.md5($query);
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($query) {
             return Task::search($query)->get();
@@ -121,7 +121,7 @@ class TaskService
     {
         $result = $task->delete();
 
-        Cache::tags(['tasks:' . $task->user_id])->flush();
+        Cache::tags(['tasks:'.$task->user_id])->flush();
 
         return $result;
     }
